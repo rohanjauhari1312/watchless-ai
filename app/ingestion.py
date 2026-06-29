@@ -39,38 +39,41 @@ def _process_frame(camera_id: int, frame_bgr, ts: datetime):
 
 
 def _ingest_loop(camera_id: int, source: str, stop_event: threading.Event, is_file: bool):
-    cap = cv2.VideoCapture(source)
-    if not cap.isOpened():
-        return
+    try:
+        cap = cv2.VideoCapture(source)
+        if not cap.isOpened():
+            return
 
-    fps = cap.get(cv2.CAP_PROP_FPS) or 0
-    frame_interval = max(int(fps * FRAME_SAMPLE_INTERVAL_SECONDS), 1) if is_file and fps else None
-    frame_count = 0
-    last_capture_time = 0.0
+        fps = cap.get(cv2.CAP_PROP_FPS) or 0
+        frame_interval = max(int(fps * FRAME_SAMPLE_INTERVAL_SECONDS), 1) if is_file and fps else None
+        frame_count = 0
+        last_capture_time = 0.0
 
-    while not stop_event.is_set():
-        ok, frame_bgr = cap.read()
-        if not ok:
+        while not stop_event.is_set():
+            ok, frame_bgr = cap.read()
+            if not ok:
+                if is_file:
+                    break  # end of test/uploaded clip
+                time.sleep(1)
+                continue
+
             if is_file:
-                break  # end of test/uploaded clip
-            time.sleep(1)
-            continue
+                frame_count += 1
+                if frame_count % frame_interval != 0:
+                    continue
+                ts = datetime.now(timezone.utc)
+                _process_frame(camera_id, frame_bgr, ts)
+            else:
+                now = time.monotonic()
+                if now - last_capture_time < FRAME_SAMPLE_INTERVAL_SECONDS:
+                    continue
+                last_capture_time = now
+                ts = datetime.now(timezone.utc)
+                _process_frame(camera_id, frame_bgr, ts)
 
-        if is_file:
-            frame_count += 1
-            if frame_count % frame_interval != 0:
-                continue
-            ts = datetime.now(timezone.utc)
-            _process_frame(camera_id, frame_bgr, ts)
-        else:
-            now = time.monotonic()
-            if now - last_capture_time < FRAME_SAMPLE_INTERVAL_SECONDS:
-                continue
-            last_capture_time = now
-            ts = datetime.now(timezone.utc)
-            _process_frame(camera_id, frame_bgr, ts)
-
-    cap.release()
+        cap.release()
+    finally:
+        _running_cameras.pop(camera_id, None)
 
 
 def start_camera(camera: Camera):
