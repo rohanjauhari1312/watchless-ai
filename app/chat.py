@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.config import ANTHROPIC_API_KEY, VISION_MODEL
 from app.models import Alert, AlertEvent, Frame
+from app.validation import validate_chat_answer
 
 client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
@@ -100,6 +101,7 @@ def answer_question(db: Session, camera_id: int, question: str, interval_seconds
 
     system = SYSTEM_PROMPT.format(camera_id=camera_id, interval=interval_seconds)
     messages = [{"role": "user", "content": question}]
+    gathered_evidence = []
 
     for _ in range(MAX_TOOL_ITERATIONS):
         response = client.messages.create(
@@ -112,13 +114,15 @@ def answer_question(db: Session, camera_id: int, question: str, interval_seconds
 
         if response.stop_reason != "tool_use":
             text_blocks = [b.text for b in response.content if b.type == "text"]
-            return "\n".join(text_blocks).strip() or "I couldn't determine an answer from the footage."
+            answer = "\n".join(text_blocks).strip() or "I couldn't determine an answer from the footage."
+            return _validated(question, answer, gathered_evidence, messages, response, system)
 
         messages.append({"role": "assistant", "content": response.content})
         tool_results = []
         for block in response.content:
             if block.type == "tool_use":
                 result = _execute_tool(db, camera_id, block.name, block.input)
+                gathered_evidence.append({"tool": block.name, "input": block.input, "result": result})
                 tool_results.append({
                     "type": "tool_result",
                     "tool_use_id": block.id,
@@ -127,3 +131,26 @@ def answer_question(db: Session, camera_id: int, question: str, interval_seconds
         messages.append({"role": "user", "content": tool_results})
 
     return "I wasn't able to find a clear answer after searching the footage log."
+
+
+def _validated(question: str, answer: str, evidence: list, messages: list, last_response, system: str) -> str:
+    if not evidence:
+        return answer  # nothing to fact-check an answer against (e.g. "no footage" replies)
+
+    check = validate_chat_answer(question, answer, evidence)
+    if check.get("valid", True):
+        return answer
+
+    # one corrective pass, grounded in the reviewer's specific objection
+    messages.append({"role": "assistant", "content": last_response.content})
+    messages.append({
+        "role": "user",
+        "content": (
+            f"A reviewer flagged an issue with that answer: {check.get('note', '')}. "
+            "Revise your answer to be strictly accurate given only the evidence you already gathered. "
+            "Don't call any more tools, just correct the answer."
+        ),
+    })
+    retry = client.messages.create(model=VISION_MODEL, max_tokens=1024, system=system, messages=messages)
+    text_blocks = [b.text for b in retry.content if b.type == "text"]
+    return "\n".join(text_blocks).strip() or answer

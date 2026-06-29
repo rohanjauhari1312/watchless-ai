@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.config import ANTHROPIC_API_KEY, VISION_MODEL
 from app.models import Alert, AlertEvent, Frame
+from app.validation import validate_alert
 
 client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
@@ -83,6 +84,13 @@ def _get_recent_alert_events(db: Session, alert_id: int):
     return [{"triggered_at": e.triggered_at.isoformat(), "reason": e.reason} for e in events]
 
 
+def _record_event_if_valid(db: Session, alert: Alert, frame: Frame, reason: str):
+    check = validate_alert(frame.image_path, alert.condition_text, reason)
+    if not check.get("valid", True):
+        return  # second opinion disagreed — suppress the false positive
+    db.add(AlertEvent(alert_id=alert.id, frame_id=frame.id, reason=reason))
+
+
 def _evaluate_simple(db: Session, alert: Alert, frame: Frame):
     response = client.messages.create(
         model=VISION_MODEL,
@@ -105,7 +113,7 @@ def _evaluate_simple(db: Session, alert: Alert, frame: Frame):
     except json.JSONDecodeError:
         return
     if result.get("matches"):
-        db.add(AlertEvent(alert_id=alert.id, frame_id=frame.id, reason=result.get("reason", "")))
+        _record_event_if_valid(db, alert, frame, result.get("reason", ""))
 
 
 def _evaluate_agentic(db: Session, alert: Alert, frame: Frame):
@@ -148,7 +156,7 @@ def _evaluate_agentic(db: Session, alert: Alert, frame: Frame):
 
         if verdict is not None:
             if verdict.get("matches"):
-                db.add(AlertEvent(alert_id=alert.id, frame_id=frame.id, reason=verdict.get("reason", "")))
+                _record_event_if_valid(db, alert, frame, verdict.get("reason", ""))
             return
 
         messages.append({"role": "user", "content": tool_results})
