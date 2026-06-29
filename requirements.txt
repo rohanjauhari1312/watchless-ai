@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+anthropic
+opencv-python
+python-dotenv
+sqlalchemy
+pydantic
+python-multipart
