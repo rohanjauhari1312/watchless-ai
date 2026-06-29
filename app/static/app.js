@@ -250,7 +250,7 @@ function renderChatTab(content) {
     log.scrollTop = log.scrollHeight;
     try {
       const res = await api(`/api/cameras/${state.activeCamera.id}/chat`, { method: "POST", body: { question } });
-      document.getElementById(thinkingId).outerHTML = `<div class="chat-msg assistant">${escapeHtml(res.answer)}</div>`;
+      document.getElementById(thinkingId).outerHTML = `<div class="chat-msg assistant">${renderMarkdown(res.answer)}</div>`;
     } catch (e) {
       document.getElementById(thinkingId).outerHTML = `<div class="chat-msg assistant error">${escapeHtml(e.message)}</div>`;
     }
@@ -264,6 +264,39 @@ function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str ?? "";
   return div.innerHTML;
+}
+
+function renderMarkdown(str) {
+  const lines = (str ?? "").split("\n");
+  const htmlBlocks = [];
+  let listBuffer = [];
+
+  const flushList = () => {
+    if (listBuffer.length) {
+      htmlBlocks.push(`<ul>${listBuffer.join("")}</ul>`);
+      listBuffer = [];
+    }
+  };
+
+  const inline = (line) => escapeHtml(line)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/(?<![*\w])\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "<em>$1</em>");
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) { flushList(); continue; }
+
+    const bullet = line.match(/^[-*]\s+(.*)/);
+    if (bullet) { listBuffer.push(`<li>${inline(bullet[1])}</li>`); continue; }
+
+    flushList();
+    const heading = line.match(/^#{1,3}\s+(.*)/);
+    if (heading) { htmlBlocks.push(`<div class="chat-heading">${inline(heading[1])}</div>`); continue; }
+
+    htmlBlocks.push(`<p>${inline(line)}</p>`);
+  }
+  flushList();
+  return htmlBlocks.join("");
 }
 
 boot();

@@ -88,7 +88,9 @@ def _execute_tool(db: Session, camera_id: int, name: str, tool_input: dict):
 
 SYSTEM_PROMPT = """You are answering questions about footage from a security camera (camera_id={camera_id}). You don't have the footage in context directly — use the search_frames and get_alert_history tools to look it up. Frames are sampled roughly every {interval} seconds, so a single frame's timestamp is an approximation of when something was observed, not a precise instant.
 
-Call tools as needed before answering. For duration questions (e.g. "how long did X happen"), search broadly first, then find the first and last timestamp where the activity holds and report that span. For identity questions among multiple candidates (e.g. "which car"), use distinguishing attributes recorded in the observations. If the available data doesn't answer the question, say so plainly rather than guessing. Keep the final answer concise and conversational — don't describe your tool calls, just answer."""
+Call tools as needed before answering. For duration questions (e.g. "how long did X happen"), search broadly first, then find the first and last timestamp where the activity holds and report that span. For identity questions among multiple candidates (e.g. "which car"), use distinguishing attributes recorded in the observations. If the available data doesn't answer the question, say so plainly rather than guessing. Keep the final answer concise and conversational — don't describe your tool calls, just answer.
+
+Format the answer in plain markdown: short paragraphs separated by blank lines, "- " for bullet lists, "**bold**" only for the few words that matter most. Never write a single dense paragraph that strings several facts together with dashes — break distinct points into separate lines or bullets instead."""
 
 
 def answer_question(db: Session, camera_id: int, question: str, interval_seconds: int) -> str:
