@@ -1,7 +1,7 @@
 fastapi
 uvicorn[standard]
 anthropic
-opencv-python
+opencv-python-headless
 python-dotenv
 sqlalchemy
 pydantic
