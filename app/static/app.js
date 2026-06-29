@@ -195,10 +195,15 @@ async function renderAlertsTab(content) {
   content.innerHTML = `
     <div class="panel">
       <h2>Alert conditions</h2>
-      <div class="row" style="margin-bottom:12px;">
+      <div class="row" style="margin-bottom:8px;">
         <input id="alertInput" placeholder="e.g. a package is left at the front door" style="flex:1;">
         <button id="addAlertBtn">Add</button>
       </div>
+      <label class="row muted" style="align-items:center;gap:6px;margin-bottom:12px;cursor:pointer;">
+        <input type="checkbox" id="alertAgentic" style="width:auto;">
+        Agentic — checks recent history before alerting, avoids repeat alerts for the same ongoing situation
+      </label>
+      <button class="secondary" id="addSuspiciousBtn" style="margin-bottom:12px;">+ Suspicious activity (agentic preset)</button>
       <div id="alertList" class="muted">Loading...</div>
     </div>
     <div class="panel">
@@ -209,7 +214,15 @@ async function renderAlertsTab(content) {
   document.getElementById("addAlertBtn").onclick = async () => {
     const val = document.getElementById("alertInput").value.trim();
     if (!val) return;
-    await api(`/api/cameras/${state.activeCamera.id}/alerts`, { method: "POST", body: { condition_text: val } });
+    const is_agentic = document.getElementById("alertAgentic").checked;
+    await api(`/api/cameras/${state.activeCamera.id}/alerts`, { method: "POST", body: { condition_text: val, is_agentic } });
+    await renderAlertsTab(content);
+  };
+  document.getElementById("addSuspiciousBtn").onclick = async () => {
+    await api(`/api/cameras/${state.activeCamera.id}/alerts`, {
+      method: "POST",
+      body: { condition_text: "suspicious activity — anything that looks like an intrusion, concealment, or unusual behavior for this space", is_agentic: true },
+    });
     await renderAlertsTab(content);
   };
 
@@ -223,7 +236,7 @@ async function renderAlertsTab(content) {
     ? `<div class="muted">No alerts configured.</div>`
     : alerts.map(a => `
       <div class="card">
-        <div>${escapeHtml(a.condition_text)}</div>
+        <div>${escapeHtml(a.condition_text)} ${a.is_agentic ? '<span class="pill">agentic</span>' : ""}</div>
         <button class="danger" data-del-alert="${a.id}">Remove</button>
       </div>
     `).join("");

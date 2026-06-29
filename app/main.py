@@ -159,23 +159,24 @@ def delete_all_frames(camera_id: int, db: Session = Depends(get_db)):
 
 class AlertBody(BaseModel):
     condition_text: str
+    is_agentic: bool = False
 
 
 @app.post("/api/cameras/{camera_id}/alerts")
 def create_alert(camera_id: int, body: AlertBody, db: Session = Depends(get_db)):
     _camera_or_404(db, camera_id)
-    alert = Alert(camera_id=camera_id, condition_text=body.condition_text)
+    alert = Alert(camera_id=camera_id, condition_text=body.condition_text, is_agentic=body.is_agentic)
     db.add(alert)
     db.commit()
     db.refresh(alert)
-    return {"id": alert.id, "condition_text": alert.condition_text, "active": alert.active}
+    return {"id": alert.id, "condition_text": alert.condition_text, "active": alert.active, "is_agentic": alert.is_agentic}
 
 
 @app.get("/api/cameras/{camera_id}/alerts")
 def list_alerts(camera_id: int, db: Session = Depends(get_db)):
     _camera_or_404(db, camera_id)
     alerts = db.query(Alert).filter(Alert.camera_id == camera_id).all()
-    return [{"id": a.id, "condition_text": a.condition_text, "active": a.active} for a in alerts]
+    return [{"id": a.id, "condition_text": a.condition_text, "active": a.active, "is_agentic": a.is_agentic} for a in alerts]
 
 
 @app.delete("/api/alerts/{alert_id}")

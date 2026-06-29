@@ -51,6 +51,7 @@ class Alert(Base):
     camera_id = Column(Integer, ForeignKey("cameras.id"), nullable=False, index=True)
     condition_text = Column(String, nullable=False)
     active = Column(Boolean, default=True)
+    is_agentic = Column(Boolean, default=False)
     created_at = Column(DateTime, default=utcnow)
 
     camera = relationship("Camera", back_populates="alerts")

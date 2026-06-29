@@ -35,3 +35,7 @@ def get_db():
 def init_db():
     from app import models  # noqa: F401
     Base.metadata.create_all(bind=engine)
+    with engine.begin() as conn:
+        columns = [row[1] for row in conn.exec_driver_sql("PRAGMA table_info(alerts)")]
+        if "is_agentic" not in columns:
+            conn.exec_driver_sql("ALTER TABLE alerts ADD COLUMN is_agentic BOOLEAN DEFAULT 0")
