@@ -81,7 +81,9 @@ The gap is: **no product lets a non-technical user ask arbitrary natural languag
 
 ### System diagram
 
-See [`docs/architecture.svg`](architecture.svg) for the full visual.
+![WatchlessAI Architecture](architecture.svg)
+
+The diagram shows the two entry points (camera source on the left, user question on the right), how frames flow through the vision call and into storage, and where the three agents sit. Teal boxes are agents — each runs its own multi-step tool loop. Grey boxes are fixed single steps.
 
 ### Components
 
