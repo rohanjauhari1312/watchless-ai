@@ -129,6 +129,32 @@ def frame_image(frame_id: int, db: Session = Depends(get_db)):
     return FileResponse(frame.image_path)
 
 
+@app.delete("/api/frames/{frame_id}")
+def delete_frame(frame_id: int, db: Session = Depends(get_db)):
+    frame = db.query(Frame).filter(Frame.id == frame_id).first()
+    if not frame:
+        raise HTTPException(status_code=404, detail="Frame not found")
+    image_path = Path(frame.image_path)
+    if image_path.exists():
+        image_path.unlink()
+    db.delete(frame)
+    db.commit()
+    return {"ok": True}
+
+
+@app.delete("/api/cameras/{camera_id}/frames")
+def delete_all_frames(camera_id: int, db: Session = Depends(get_db)):
+    _camera_or_404(db, camera_id)
+    frames = db.query(Frame).filter(Frame.camera_id == camera_id).all()
+    for frame in frames:
+        image_path = Path(frame.image_path)
+        if image_path.exists():
+            image_path.unlink()
+        db.delete(frame)
+    db.commit()
+    return {"ok": True}
+
+
 # ---------- Alerts ----------
 
 class AlertBody(BaseModel):

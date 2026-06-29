@@ -152,7 +152,21 @@ async function renderCamera() {
 }
 
 async function renderFramesTab(content) {
-  content.innerHTML = `<div class="panel"><h2>Recent frames</h2><div id="frameList" class="muted">Loading...</div></div>`;
+  content.innerHTML = `
+    <div class="panel">
+      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h2 style="margin:0;">Recent frames</h2>
+        <button class="danger" id="clearFramesBtn">Clear all</button>
+      </div>
+      <div id="frameList" class="muted">Loading...</div>
+    </div>
+  `;
+  document.getElementById("clearFramesBtn").onclick = async () => {
+    if (!confirm("Delete all frames for this camera? This cannot be undone.")) return;
+    await api(`/api/cameras/${state.activeCamera.id}/frames`, { method: "DELETE" });
+    await renderFramesTab(content);
+  };
+
   const frames = await api(`/api/cameras/${state.activeCamera.id}/frames`);
   const listEl = document.getElementById("frameList");
   if (frames.length === 0) {
@@ -162,12 +176,19 @@ async function renderFramesTab(content) {
   listEl.innerHTML = frames.map(f => `
     <div class="frame-item">
       <img src="/api/frames/${f.id}/image" loading="lazy">
-      <div>
+      <div style="flex:1;">
         <div class="muted">${new Date(f.timestamp).toLocaleString()}</div>
         <div>${escapeHtml(f.summary || "")}</div>
       </div>
+      <button class="secondary" data-del-frame="${f.id}">Delete</button>
     </div>
   `).join("");
+  listEl.querySelectorAll("[data-del-frame]").forEach(btn => {
+    btn.onclick = async () => {
+      await api(`/api/frames/${btn.dataset.delFrame}`, { method: "DELETE" });
+      await renderFramesTab(content);
+    };
+  });
 }
 
 async function renderAlertsTab(content) {

@@ -74,11 +74,13 @@
   .pill.live { background: #1f3a26; color: #6fd88a; }
   .frame-item {
     display: flex;
+    align-items: center;
     gap: 12px;
     padding: 10px 0;
     border-bottom: 1px solid var(--border);
     font-size: 13px;
   }
+  .frame-item button { flex-shrink: 0; }
   .frame-item img { width: 90px; height: 60px; object-fit: cover; border-radius: 4px; background: #000; }
   .chat-log { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; max-height: 320px; overflow-y: auto; }
   .chat-msg { padding: 10px 12px; border-radius: 8px; font-size: 14px; max-width: 85%; line-height: 1.5; }
