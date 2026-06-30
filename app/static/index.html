@@ -135,6 +135,21 @@
     overflow-y: auto;
   }
   .frame-modal-inner img { width: 100%; border-radius: 6px; margin-bottom: 12px; display: block; }
+  .demo-section { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 600px) { .demo-section { grid-template-columns: 1fr; } }
+  .demo-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .demo-video-wrap { position: relative; aspect-ratio: 16/9; background: #0a0b0e; cursor: pointer; }
+  .demo-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .demo-play {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.45);
+    color: white;
+    transition: opacity 0.15s;
+  }
+  .demo-play:hover { background: rgba(0,0,0,0.3); }
+  .demo-label { font-size: 14px; font-weight: 600; padding: 12px 14px 4px; }
+  .demo-desc { font-size: 13px; color: var(--muted); padding: 0 14px 14px; line-height: 1.5; }
 </style>
 </head>
 <body>

@@ -35,6 +35,29 @@ function renderDashboard() {
       <h1>WatchlessAI</h1>
     </div>
 
+    <div class="demo-section">
+      <div class="demo-card">
+        <div class="demo-video-wrap">
+          <video src="/demo-upload.mp4" muted loop playsinline preload="none" class="demo-video" id="demoUploadVid"></video>
+          <div class="demo-play" data-vid="demoUploadVid">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="36" height="36"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+        </div>
+        <div class="demo-label">Upload a clip</div>
+        <div class="demo-desc">Drop any video file and start monitoring in seconds. No camera hardware needed.</div>
+      </div>
+      <div class="demo-card">
+        <div class="demo-video-wrap">
+          <video src="/demo-ask.mp4" muted loop playsinline preload="none" class="demo-video" id="demoAskVid"></video>
+          <div class="demo-play" data-vid="demoAskVid">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="36" height="36"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+        </div>
+        <div class="demo-label">Ask anything about your footage</div>
+        <div class="demo-desc">Ask in plain English. Get answers with timestamps you can click to see the exact frame.</div>
+      </div>
+    </div>
+
     <div class="panel">
       <h2>Add a camera</h2>
       <div class="row" style="margin-bottom:10px;">
@@ -94,6 +117,15 @@ function renderDashboard() {
       errEl.classList.remove("hidden");
     }
   };
+
+  document.querySelectorAll(".demo-play").forEach(btn => {
+    btn.onclick = () => {
+      const vid = document.getElementById(btn.dataset.vid);
+      if (!vid) return;
+      if (vid.paused) { vid.play(); btn.style.opacity = "0"; }
+      else { vid.pause(); btn.style.opacity = "1"; }
+    };
+  });
 
   const list = document.getElementById("cameraList");
   if (state.cameras.length === 0) {
