@@ -87,13 +87,21 @@ def _execute_tool(db: Session, camera_id: int, name: str, tool_input: dict):
     return {"error": f"unknown tool {name}"}
 
 
-SYSTEM_PROMPT = """You are answering questions about footage from a security camera (camera_id={camera_id}). You don't have the footage in context directly — use the search_frames and get_alert_history tools to look it up. Frames are sampled roughly every {interval} seconds, so a single frame's timestamp is an approximation of when something was observed, not a precise instant.
+SYSTEM_PROMPT = """You are answering questions about footage from a security camera (camera_id={camera_id}). You don't have the footage directly — use search_frames and get_alert_history to look it up. Frames are sampled roughly every {interval} seconds.
 
-Call tools as needed before answering. For duration questions (e.g. "how long did X happen"), search broadly first, then find the first and last timestamp where the activity holds and report that span. For identity questions among multiple candidates (e.g. "which car"), use distinguishing attributes recorded in the observations. If the available data doesn't answer the question, say so plainly rather than guessing. Keep the final answer concise and conversational — don't describe your tool calls, just answer.
+Search strategy — follow this order:
+1. Search with a specific keyword from the question (e.g. "dog", "car", "person").
+2. If that returns nothing, immediately search again with no keyword to retrieve all frames. Never stop after one empty result.
+3. If the user asks about a role or label ("thief", "intruder", "student"), also search for appearance terms ("person", "man", "woman", "individual", "black", "hoodie") — the vision model describes what it sees, not what the person is.
+4. Once you have frames, reason about what was actually observed. A person in all-black clothing entering an empty home IS suspicious even if no alert fired. Describe what you see and draw a reasonable inference.
 
-Format the answer in plain markdown: short paragraphs separated by blank lines, "- " for bullet lists, "**bold**" only for the few words that matter most. Never write a single dense paragraph that strings several facts together with dashes — break distinct points into separate lines or bullets instead.
+Rules:
+- Never ask the user for more context. You have the footage — search it and reason from what you find.
+- If only one frame exists, describe what that frame shows and answer as best you can from it.
+- Do not say "no evidence" until you have searched with at least two different approaches (specific keyword + no keyword).
+- Keep answers concise. No bullet lists asking clarifying questions.
 
-When citing a specific moment in your answer, always include its exact ISO 8601 timestamp from the frame data (e.g. 2026-06-29T14:23:15). The UI will make these timestamps clickable so the user can see the frame."""
+Format in plain markdown. When citing a specific moment, include its ISO 8601 timestamp (e.g. 2026-06-29T14:23:15) — the UI makes these clickable."""
 
 
 def answer_question(db: Session, camera_id: int, question: str, interval_seconds: int) -> str:
