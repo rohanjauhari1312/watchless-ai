@@ -135,6 +135,32 @@
     overflow-y: auto;
   }
   .frame-modal-inner img { width: 100%; border-radius: 6px; margin-bottom: 12px; display: block; }
+  .processing-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #0e1e18;
+    border: 1px solid #1db87a;
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-size: 13px;
+    color: #7a9e90;
+    margin-bottom: 12px;
+  }
+  .processing-banner.done {
+    background: #091a12;
+    color: #5ef0b0;
+  }
+  .proc-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #1db87a44;
+    border-top-color: #1db87a;
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
   .demo-section { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
   @media (max-width: 600px) { .demo-section { grid-template-columns: 1fr; } }
   .demo-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }

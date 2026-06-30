@@ -1,5 +1,6 @@
 const app = document.getElementById("app");
-let state = { cameras: [], activeCamera: null, tab: "frames", highlightTs: null };
+let state = { cameras: [], activeCamera: null, tab: "frames", highlightTs: null, processing: false };
+let _processingPoll = null;
 
 async function api(path, opts = {}) {
   const res = await fetch(path, {
@@ -111,6 +112,7 @@ function renderDashboard() {
       await loadCameras();
       state.activeCamera = state.cameras.find(c => c.id === cam.id);
       state.tab = "chat";
+      state.processing = true;
       await renderCamera();
     } catch (e) {
       errEl.textContent = e.message;
@@ -301,9 +303,16 @@ async function renderAlertsTab(content) {
 }
 
 function renderChatTab(content) {
+  clearInterval(_processingPoll);
   content.innerHTML = `
     <div class="panel">
       <h2>Ask about this camera's footage</h2>
+      ${state.processing ? `
+        <div id="processingBanner" class="processing-banner">
+          <span class="proc-spinner"></span>
+          <span id="procText">Analysing your clip — <strong id="procCount">0</strong> frames captured so far</span>
+        </div>
+      ` : ""}
       <div id="chatLog" class="chat-log"></div>
       <div class="row">
         <input id="chatInput" placeholder="e.g. how long did the child study?" style="flex:1;">
@@ -311,6 +320,31 @@ function renderChatTab(content) {
       </div>
     </div>
   `;
+
+  if (state.processing) {
+    _processingPoll = setInterval(async () => {
+      try {
+        const [cameras, frames] = await Promise.all([
+          api("/api/cameras"),
+          api(`/api/cameras/${state.activeCamera.id}/frames`),
+        ]);
+        const cam = cameras.find(c => c.id === state.activeCamera.id);
+        const count = frames.length;
+        const countEl = document.getElementById("procCount");
+        if (countEl) countEl.textContent = count;
+        if (!cam || !cam.active) {
+          clearInterval(_processingPoll);
+          state.processing = false;
+          const banner = document.getElementById("processingBanner");
+          if (banner) {
+            banner.className = "processing-banner done";
+            banner.innerHTML = `Done — <strong>${count}</strong> frame${count !== 1 ? "s" : ""} captured. Ask your first question below.`;
+          }
+        }
+      } catch (_) {}
+    }, 3000);
+  }
+
   const log = document.getElementById("chatLog");
   log.addEventListener("click", (e) => {
     const btn = e.target.closest(".ts-link");
