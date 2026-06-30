@@ -345,9 +345,11 @@ async function renderAlertsTab(content) {
 
 function renderChatTab(content) {
   clearInterval(_processingPoll);
+  const isFile = !state.activeCamera.source?.toLowerCase().startsWith("rtsp://");
   content.innerHTML = `
     <div class="panel">
       <h2>Ask about this camera's footage</h2>
+      ${isFile ? `<video src="/api/cameras/${state.activeCamera.id}/video" controls muted class="footage-player"></video>` : ""}
       ${state.processing ? `
         <div id="processingBanner" class="processing-banner">
           <span class="proc-spinner"></span>

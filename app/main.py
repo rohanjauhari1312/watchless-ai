@@ -123,6 +123,15 @@ def list_frames(camera_id: int, db: Session = Depends(get_db)):
     ]
 
 
+@app.get("/api/cameras/{camera_id}/video")
+def camera_video(camera_id: int, db: Session = Depends(get_db)):
+    camera = _camera_or_404(db, camera_id)
+    source = camera.source
+    if source.lower().startswith("rtsp://") or not Path(source).exists():
+        raise HTTPException(status_code=404, detail="No video file for this camera")
+    return FileResponse(source, media_type="video/mp4")
+
+
 @app.get("/api/frames/{frame_id}/image")
 def frame_image(frame_id: int, db: Session = Depends(get_db)):
     frame = db.query(Frame).filter(Frame.id == frame_id).first()
