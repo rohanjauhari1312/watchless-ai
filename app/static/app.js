@@ -460,9 +460,11 @@ async function trySample(filename, name) {
   if (!resp.ok) throw new Error("Could not fetch sample clip");
   const blob = await resp.blob();
   const file = new File([blob], filename, { type: "video/mp4" });
+  const interval = parseInt(document.getElementById("camInterval")?.value || "5");
   const formData = new FormData();
   formData.append("name", name);
   formData.append("file", file);
+  formData.append("interval_seconds", interval);
   const cam = await api("/api/cameras/upload", { method: "POST", body: formData });
   await api(`/api/cameras/${cam.id}/start`, { method: "POST" });
   await loadCameras();
