@@ -1,5 +1,5 @@
 const app = document.getElementById("app");
-let state = { cameras: [], activeCamera: null, tab: "frames" };
+let state = { cameras: [], activeCamera: null, tab: "frames", highlightTs: null };
 
 async function api(path, opts = {}) {
   const res = await fetch(path, {
@@ -78,9 +78,12 @@ function renderDashboard() {
     formData.append("name", name);
     formData.append("file", fileInput.files[0]);
     try {
-      await api("/api/cameras/upload", { method: "POST", body: formData });
+      const cam = await api("/api/cameras/upload", { method: "POST", body: formData });
+      await api(`/api/cameras/${cam.id}/start`, { method: "POST" });
       await loadCameras();
-      renderDashboard();
+      state.activeCamera = state.cameras.find(c => c.id === cam.id);
+      state.tab = "chat";
+      await renderCamera();
     } catch (e) {
       errEl.textContent = e.message;
       errEl.classList.remove("hidden");
@@ -272,6 +275,10 @@ function renderChatTab(content) {
     </div>
   `;
   const log = document.getElementById("chatLog");
+  log.addEventListener("click", (e) => {
+    const btn = e.target.closest(".ts-link");
+    if (btn) jumpToTimestamp(btn.dataset.ts);
+  });
   const input = document.getElementById("chatInput");
   const send = async () => {
     const question = input.value.trim();
@@ -314,7 +321,8 @@ function renderMarkdown(str) {
 
   const inline = (line) => escapeHtml(line)
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/(?<![*\w])\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "<em>$1</em>");
+    .replace(/(?<![*\w])\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "<em>$1</em>")
+    .replace(/\b(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\b/g, '<button class="ts-link" data-ts="$1">$1</button>');
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
@@ -331,6 +339,40 @@ function renderMarkdown(str) {
   }
   flushList();
   return htmlBlocks.join("");
+}
+
+async function jumpToTimestamp(isoTs) {
+  const frames = await api(`/api/cameras/${state.activeCamera.id}/frames`);
+  const target = new Date(isoTs).getTime();
+  let closest = null, minDiff = Infinity;
+  for (const f of frames) {
+    const diff = Math.abs(new Date(f.timestamp).getTime() - target);
+    if (diff < minDiff) { minDiff = diff; closest = f; }
+  }
+  if (closest) showFrameModal(closest);
+}
+
+function showFrameModal(frame) {
+  let modal = document.getElementById("frameModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "frameModal";
+    modal.className = "frame-modal hidden";
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="frame-modal-inner">
+      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <span class="muted">${new Date(frame.timestamp).toLocaleString()}</span>
+        <button class="secondary" id="closeFrameModal">Close</button>
+      </div>
+      <img src="/api/frames/${frame.id}/image">
+      <div style="font-size:14px;">${escapeHtml(frame.summary || "")}</div>
+    </div>
+  `;
+  modal.classList.remove("hidden");
+  document.getElementById("closeFrameModal").onclick = () => modal.classList.add("hidden");
+  modal.onclick = (e) => { if (e.target === modal) modal.classList.add("hidden"); };
 }
 
 boot();

@@ -91,7 +91,9 @@ SYSTEM_PROMPT = """You are answering questions about footage from a security cam
 
 Call tools as needed before answering. For duration questions (e.g. "how long did X happen"), search broadly first, then find the first and last timestamp where the activity holds and report that span. For identity questions among multiple candidates (e.g. "which car"), use distinguishing attributes recorded in the observations. If the available data doesn't answer the question, say so plainly rather than guessing. Keep the final answer concise and conversational — don't describe your tool calls, just answer.
 
-Format the answer in plain markdown: short paragraphs separated by blank lines, "- " for bullet lists, "**bold**" only for the few words that matter most. Never write a single dense paragraph that strings several facts together with dashes — break distinct points into separate lines or bullets instead."""
+Format the answer in plain markdown: short paragraphs separated by blank lines, "- " for bullet lists, "**bold**" only for the few words that matter most. Never write a single dense paragraph that strings several facts together with dashes — break distinct points into separate lines or bullets instead.
+
+When citing a specific moment in your answer, always include its exact ISO 8601 timestamp from the frame data (e.g. 2026-06-29T14:23:15). The UI will make these timestamps clickable so the user can see the frame."""
 
 
 def answer_question(db: Session, camera_id: int, question: str, interval_seconds: int) -> str:

@@ -101,6 +101,40 @@
   .tabs button.active { background: var(--accent); color: white; border-color: var(--accent); }
   .hidden { display: none !important; }
   .error { color: var(--danger); font-size: 13px; margin-top: 6px; }
+  .ts-link {
+    background: none;
+    border: none;
+    color: #5DCAA5;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 0.85em;
+    padding: 1px 3px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    border-radius: 3px;
+  }
+  .ts-link:hover { color: #9FE1CB; background: rgba(93,202,165,0.08); }
+  .frame-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .frame-modal.hidden { display: none !important; }
+  .frame-modal-inner {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 620px;
+    width: 92%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .frame-modal-inner img { width: 100%; border-radius: 6px; margin-bottom: 12px; display: block; }
 </style>
 </head>
 <body>
