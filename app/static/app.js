@@ -36,35 +36,12 @@ function renderDashboard() {
       <h1>WatchlessAI</h1>
     </div>
 
-    <div class="demo-section">
-      <div class="demo-card">
-        <div class="demo-video-wrap">
-          <video src="/demo-upload.mp4" muted loop playsinline preload="none" class="demo-video" id="demoUploadVid"></video>
-          <div class="demo-play" data-vid="demoUploadVid">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="36" height="36"><path d="M8 5v14l11-7z"/></svg>
-          </div>
-        </div>
-        <div class="demo-label">Upload a clip</div>
-        <div class="demo-desc">Drop any video file and start monitoring in seconds. No camera hardware needed.</div>
-      </div>
-      <div class="demo-card">
-        <div class="demo-video-wrap">
-          <video src="/demo-ask.mp4" muted loop playsinline preload="none" class="demo-video" id="demoAskVid"></video>
-          <div class="demo-play" data-vid="demoAskVid">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="36" height="36"><path d="M8 5v14l11-7z"/></svg>
-          </div>
-        </div>
-        <div class="demo-label">Ask anything about your footage</div>
-        <div class="demo-desc">Ask in plain English. Get answers with timestamps you can click to see the exact frame.</div>
-      </div>
-    </div>
-
     <div class="panel">
-      <h2>No clip? Try a sample</h2>
+      <h2>Try a sample clip</h2>
       <div class="sample-grid">
         <div class="sample-card" data-file="dog_water.mp4" data-name="Dog at water bowl">
-          <div class="sample-thumb" style="background:#0a1a0f;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#3cbb88" stroke-width="1.5" width="32" height="32"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+          <div class="sample-thumb">
+            <video src="/samples/dog_water.mp4" preload="metadata" muted class="sample-video"></video>
           </div>
           <div class="sample-info">
             <div class="sample-name">Dog at water bowl</div>
@@ -73,8 +50,8 @@ function renderDashboard() {
           <button class="secondary sample-btn">Try this</button>
         </div>
         <div class="sample-card" data-file="car_parking.mp4" data-name="Car parking">
-          <div class="sample-thumb" style="background:#0a0f1a;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#5b8cff" stroke-width="1.5" width="32" height="32"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/></svg>
+          <div class="sample-thumb">
+            <video src="/samples/car_parking.mp4" preload="metadata" muted class="sample-video"></video>
           </div>
           <div class="sample-info">
             <div class="sample-name">Car parking</div>
@@ -83,8 +60,8 @@ function renderDashboard() {
           <button class="secondary sample-btn">Try this</button>
         </div>
         <div class="sample-card" data-file="student_studying.mp4" data-name="Student studying">
-          <div class="sample-thumb" style="background:#1a0f0a;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#e5a44d" stroke-width="1.5" width="32" height="32"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <div class="sample-thumb">
+            <video src="/samples/student_studying.mp4" preload="metadata" muted class="sample-video"></video>
           </div>
           <div class="sample-info">
             <div class="sample-name">Student studying</div>
@@ -93,8 +70,8 @@ function renderDashboard() {
           <button class="secondary sample-btn">Try this</button>
         </div>
         <div class="sample-card" data-file="generic_security.mp4" data-name="Security footage">
-          <div class="sample-thumb" style="background:#1a0a0a;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#e5544d" stroke-width="1.5" width="32" height="32"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <div class="sample-thumb">
+            <video src="/samples/generic_security.mp4" preload="metadata" muted class="sample-video"></video>
           </div>
           <div class="sample-info">
             <div class="sample-name">Security footage</div>
@@ -180,15 +157,6 @@ function renderDashboard() {
         btn.textContent = "Try this";
         alert("Failed to load sample: " + e.message);
       }
-    };
-  });
-
-  document.querySelectorAll(".demo-play").forEach(btn => {
-    btn.onclick = () => {
-      const vid = document.getElementById(btn.dataset.vid);
-      if (!vid) return;
-      if (vid.paused) { vid.play(); btn.style.opacity = "0"; }
-      else { vid.pause(); btn.style.opacity = "1"; }
     };
   });
 

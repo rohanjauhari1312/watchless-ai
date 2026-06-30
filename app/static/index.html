@@ -170,12 +170,8 @@
     display: flex;
     flex-direction: column;
   }
-  .sample-thumb {
-    aspect-ratio: 16/9;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+  .sample-thumb { aspect-ratio: 16/9; background: #000; overflow: hidden; }
+  .sample-video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
   .sample-info { padding: 8px 10px 4px; flex: 1; }
   .sample-name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
   .sample-hint { font-size: 11px; color: var(--muted); line-height: 1.4; }
