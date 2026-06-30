@@ -15,7 +15,12 @@ async function api(path, opts = {}) {
 }
 
 async function boot() {
-  await loadCameras();
+  try {
+    await loadCameras();
+  } catch (e) {
+    state.cameras = [];
+    console.error("Failed to reach API on boot:", e);
+  }
   renderDashboard();
 }
 
