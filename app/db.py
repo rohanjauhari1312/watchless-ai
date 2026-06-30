@@ -36,6 +36,9 @@ def init_db():
     from app import models  # noqa: F401
     Base.metadata.create_all(bind=engine)
     with engine.begin() as conn:
-        columns = [row[1] for row in conn.exec_driver_sql("PRAGMA table_info(alerts)")]
-        if "is_agentic" not in columns:
+        alert_cols = [row[1] for row in conn.exec_driver_sql("PRAGMA table_info(alerts)")]
+        if "is_agentic" not in alert_cols:
             conn.exec_driver_sql("ALTER TABLE alerts ADD COLUMN is_agentic BOOLEAN DEFAULT 0")
+        camera_cols = [row[1] for row in conn.exec_driver_sql("PRAGMA table_info(cameras)")]
+        if "interval_seconds" not in camera_cols:
+            conn.exec_driver_sql("ALTER TABLE cameras ADD COLUMN interval_seconds INTEGER DEFAULT 10")

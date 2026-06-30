@@ -86,6 +86,13 @@ function renderDashboard() {
       <h2>Add a camera</h2>
       <div class="row" style="margin-bottom:10px;">
         <input id="camName" placeholder="Camera name (e.g. Front door)" style="flex:1;">
+        <select id="camInterval" class="interval-select">
+          <option value="5">Every 5 s</option>
+          <option value="10" selected>Every 10 s</option>
+          <option value="30">Every 30 s</option>
+          <option value="60">Every 1 min</option>
+          <option value="300">Every 5 min</option>
+        </select>
       </div>
       <div class="row">
         <input id="camRtsp" placeholder="rtsp:// stream URL" style="flex:1;">
@@ -107,11 +114,12 @@ function renderDashboard() {
   document.getElementById("addRtspBtn").onclick = async () => {
     const name = document.getElementById("camName").value.trim();
     const rtsp_url = document.getElementById("camRtsp").value.trim();
+    const interval_seconds = parseInt(document.getElementById("camInterval").value);
     const errEl = document.getElementById("camError");
     errEl.classList.add("hidden");
     if (!name || !rtsp_url) { errEl.textContent = "Name and RTSP URL required."; errEl.classList.remove("hidden"); return; }
     try {
-      await api("/api/cameras", { method: "POST", body: { name, rtsp_url } });
+      await api("/api/cameras", { method: "POST", body: { name, rtsp_url, interval_seconds } });
       await loadCameras();
       renderDashboard();
     } catch (e) {
@@ -123,12 +131,14 @@ function renderDashboard() {
   document.getElementById("addFileBtn").onclick = async () => {
     const name = document.getElementById("camName").value.trim();
     const fileInput = document.getElementById("camFile");
+    const interval_seconds = parseInt(document.getElementById("camInterval").value);
     const errEl = document.getElementById("camError");
     errEl.classList.add("hidden");
     if (!name || !fileInput.files[0]) { errEl.textContent = "Name and a video file required."; errEl.classList.remove("hidden"); return; }
     const formData = new FormData();
     formData.append("name", name);
     formData.append("file", fileInput.files[0]);
+    formData.append("interval_seconds", interval_seconds);
     try {
       const cam = await api("/api/cameras/upload", { method: "POST", body: formData });
       await api(`/api/cameras/${cam.id}/start`, { method: "POST" });

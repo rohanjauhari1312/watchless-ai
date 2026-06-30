@@ -40,17 +40,19 @@ def _camera_dict(camera: Camera) -> dict:
         "name": camera.name,
         "source": camera.source,
         "active": is_camera_running(camera.id),
+        "interval_seconds": camera.interval_seconds or 10,
     }
 
 
 class CameraBody(BaseModel):
     name: str
     rtsp_url: str
+    interval_seconds: int = 10
 
 
 @app.post("/api/cameras")
 def create_camera(body: CameraBody, db: Session = Depends(get_db)):
-    camera = Camera(name=body.name, source=body.rtsp_url)
+    camera = Camera(name=body.name, source=body.rtsp_url, interval_seconds=body.interval_seconds)
     db.add(camera)
     db.commit()
     db.refresh(camera)
@@ -58,11 +60,11 @@ def create_camera(body: CameraBody, db: Session = Depends(get_db)):
 
 
 @app.post("/api/cameras/upload")
-def upload_camera(name: str = Form(...), file: UploadFile = File(...), db: Session = Depends(get_db)):
+def upload_camera(name: str = Form(...), file: UploadFile = File(...), interval_seconds: int = Form(10), db: Session = Depends(get_db)):
     dest = UPLOADS_DIR / f"{uuid.uuid4().hex}_{file.filename}"
     with open(dest, "wb") as out:
         shutil.copyfileobj(file.file, out)
-    camera = Camera(name=name, source=str(dest))
+    camera = Camera(name=name, source=str(dest), interval_seconds=interval_seconds)
     db.add(camera)
     db.commit()
     db.refresh(camera)
@@ -222,7 +224,8 @@ class ChatBody(BaseModel):
 @app.post("/api/cameras/{camera_id}/chat")
 def chat(camera_id: int, body: ChatBody, db: Session = Depends(get_db)):
     _camera_or_404(db, camera_id)
-    answer = answer_question(db, camera_id, body.question, FRAME_SAMPLE_INTERVAL_SECONDS)
+    camera = _camera_or_404(db, camera_id)
+    answer = answer_question(db, camera_id, body.question, camera.interval_seconds or FRAME_SAMPLE_INTERVAL_SECONDS)
     return {"answer": answer}
 
 

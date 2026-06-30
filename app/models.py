@@ -25,6 +25,7 @@ class Camera(Base):
     name = Column(String, nullable=False)
     source = Column(String, nullable=False)  # rtsp:// url or local file path
     active = Column(Boolean, default=False)
+    interval_seconds = Column(Integer, default=10)
     created_at = Column(DateTime, default=utcnow)
 
     frames = relationship("Frame", back_populates="camera", cascade="all, delete-orphan")

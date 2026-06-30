@@ -38,14 +38,14 @@ def _process_frame(camera_id: int, frame_bgr, ts: datetime):
         db.close()
 
 
-def _ingest_loop(camera_id: int, source: str, stop_event: threading.Event, is_file: bool):
+def _ingest_loop(camera_id: int, source: str, stop_event: threading.Event, is_file: bool, interval: int):
     try:
         cap = cv2.VideoCapture(source)
         if not cap.isOpened():
             return
 
         fps = cap.get(cv2.CAP_PROP_FPS) or 0
-        frame_interval = max(int(fps * FRAME_SAMPLE_INTERVAL_SECONDS), 1) if is_file and fps else None
+        frame_interval = max(int(fps * interval), 1) if is_file and fps else None
         frame_count = 0
         last_capture_time = 0.0
 
@@ -53,7 +53,7 @@ def _ingest_loop(camera_id: int, source: str, stop_event: threading.Event, is_fi
             ok, frame_bgr = cap.read()
             if not ok:
                 if is_file:
-                    break  # end of test/uploaded clip
+                    break
                 time.sleep(1)
                 continue
 
@@ -65,7 +65,7 @@ def _ingest_loop(camera_id: int, source: str, stop_event: threading.Event, is_fi
                 _process_frame(camera_id, frame_bgr, ts)
             else:
                 now = time.monotonic()
-                if now - last_capture_time < FRAME_SAMPLE_INTERVAL_SECONDS:
+                if now - last_capture_time < interval:
                     continue
                 last_capture_time = now
                 ts = datetime.now(timezone.utc)
@@ -80,11 +80,12 @@ def start_camera(camera: Camera):
     if camera.id in _running_cameras:
         return
     is_file = not str(camera.source).lower().startswith("rtsp://")
+    interval = camera.interval_seconds or FRAME_SAMPLE_INTERVAL_SECONDS
     stop_event = threading.Event()
     _running_cameras[camera.id] = stop_event
     thread = threading.Thread(
         target=_ingest_loop,
-        args=(camera.id, camera.source, stop_event, is_file),
+        args=(camera.id, camera.source, stop_event, is_file, interval),
         daemon=True,
     )
     thread.start()
